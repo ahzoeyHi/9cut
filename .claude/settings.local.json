@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(pushd:*)",
+      "Bash(popd:*)",
+      "Bash(dir:*)",
+      "Bash(npx vue-tsc:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

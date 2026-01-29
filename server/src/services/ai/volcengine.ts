@@ -4,8 +4,8 @@ import type {
   TextGenerationOptions
 } from './adapter';
 
-export class OpenAIAdapter implements TextGenerationAdapter {
-  type = 'openai' as const;
+export class VolcengineAdapter implements TextGenerationAdapter {
+  type = 'volcengine' as const;
   config: AIServiceConfig;
 
   constructor(config: AIServiceConfig) {
@@ -14,11 +14,18 @@ export class OpenAIAdapter implements TextGenerationAdapter {
 
   async testConnection(): Promise<boolean> {
     try {
-      // 简单的测试请求
-      const response = await fetch(`${this.config.endpoint || 'https://api.openai.com/v1'}/models`, {
+      const endpoint = this.config.endpoint || 'https://ark.cn-beijing.volces.com/api/v3';
+      const response = await fetch(`${endpoint}/chat/completions`, {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.config.api_key}`
-        }
+        },
+        body: JSON.stringify({
+          model: this.config.model,
+          messages: [{ role: 'user', content: 'test' }],
+          max_tokens: 10
+        })
       });
       return response.ok;
     } catch {
@@ -27,7 +34,12 @@ export class OpenAIAdapter implements TextGenerationAdapter {
   }
 
   async generateText(prompt: string, options?: TextGenerationOptions): Promise<string> {
-    const endpoint = this.config.endpoint || 'https://api.openai.com/v1';
+    const endpoint = this.config.endpoint || 'https://ark.cn-beijing.volces.com/api/v3';
+    const model = this.config.model;
+
+    if (!model) {
+      throw new Error('Volcengine requires a model endpoint ID');
+    }
 
     const response = await fetch(`${endpoint}/chat/completions`, {
       method: 'POST',
@@ -36,7 +48,7 @@ export class OpenAIAdapter implements TextGenerationAdapter {
         'Authorization': `Bearer ${this.config.api_key}`
       },
       body: JSON.stringify({
-        model: this.config.model,
+        model,
         messages: [{ role: 'user', content: prompt }],
         max_tokens: options?.maxTokens || 4096,
         temperature: options?.temperature || 0.7,
@@ -45,10 +57,14 @@ export class OpenAIAdapter implements TextGenerationAdapter {
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      const error = await response.text();
+      throw new Error(`Volcengine API error: ${response.statusText} - ${error}`);
     }
 
-    const data = await response.json() as { choices: { message: { content: string } }[] };
+    const data = await response.json() as {
+      choices: { message: { content: string } }[]
+    };
+
     return data.choices[0].message.content;
   }
 }

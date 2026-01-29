@@ -1,5 +1,5 @@
 import http from './http';
-import type { AIServiceConfig, Prompt, FunctionType } from '../types';
+import type { AIServiceConfig, Prompt, FunctionType, AIServiceType, ModelInfo } from '../types';
 
 export interface AIServicesResponse {
   services: AIServiceConfig[];
@@ -15,6 +15,10 @@ export interface PromptsResponse {
 
 export interface PromptResponse {
   prompt: Prompt;
+}
+
+export interface ModelsResponse {
+  models: ModelInfo[];
 }
 
 export const configApi = {
@@ -33,6 +37,21 @@ export const configApi = {
 
   enableAIService(id: string): Promise<AIServiceResponse> {
     return http.post(`/config/ai-services/${id}/enable`);
+  },
+
+  // 获取可用模型列表
+  getAvailableModels(
+    serviceType: AIServiceType,
+    functionType: FunctionType,
+    apiKey: string,
+    endpoint?: string
+  ): Promise<ModelsResponse> {
+    return http.post('/config/ai-services/models', {
+      serviceType,
+      functionType,
+      apiKey,
+      endpoint
+    });
   },
 
   // 提示词管理

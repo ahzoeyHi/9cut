@@ -132,3 +132,14 @@ export interface PaginatedResponse<T> {
   page: number;
   pageSize: number;
 }
+
+// 模型能力类型
+export type ModelCapability = 'text' | 'image' | 'speech' | 'video' | 'embedding';
+
+// 模型信息
+export interface ModelInfo {
+  id: string;
+  name: string;
+  capabilities: ModelCapability[];
+  description?: string;
+}

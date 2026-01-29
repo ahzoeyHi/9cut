@@ -1,0 +1,41 @@
+# Docker
+.dockerignore
+
+# Node modules
+client/node_modules
+server/node_modules
+
+# 开发环境文件
+client/.vite
+server/dist
+*.log
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# 测试
+coverage
+*.test.ts
+*.spec.ts
+
+# 本地数据
+server/database.sqlite
+server/uploads/*
+server/generated/*
+!server/uploads/.gitkeep
+!server/generated/.gitkeep
+
+# 环境变量
+.env.local
+.env.*.local
+
+# 文档
+README.md
+docs/

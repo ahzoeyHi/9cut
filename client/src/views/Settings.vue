@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useConfigStore } from '../stores/config';
-import type { AIServiceType, FunctionType, AIServiceConfig, Prompt } from '../types';
+import { configApi } from '../api/config';
+import type { AIServiceType, FunctionType, AIServiceConfig, Prompt, ModelInfo } from '../types';
 
 const configStore = useConfigStore();
 
@@ -9,6 +10,11 @@ const activeTab = ref<'ai-services' | 'prompts'>('ai-services');
 const showServiceModal = ref(false);
 const showPromptModal = ref(false);
 const testingId = ref<string | null>(null);
+
+// 模型相关状态
+const availableModels = ref<ModelInfo[]>([]);
+const loadingModels = ref(false);
+const modelsError = ref<string | null>(null);
 
 const serviceForm = ref<Partial<AIServiceConfig>>({
   serviceType: 'openai',
@@ -46,6 +52,48 @@ onMounted(async () => {
   await configStore.fetchPrompts();
 });
 
+// 监听服务类型、功能类型或API Key变化，清空模型列表
+watch(
+  () => [serviceForm.value.serviceType, serviceForm.value.functionType],
+  () => {
+    availableModels.value = [];
+    serviceForm.value.model = '';
+    modelsError.value = null;
+  }
+);
+
+// 加载模型列表
+const loadModels = async () => {
+  const { serviceType, functionType, apiKey, endpoint } = serviceForm.value;
+
+  if (!serviceType || !functionType || !apiKey) {
+    modelsError.value = '请先填写服务类型、功能类型和API Key';
+    return;
+  }
+
+  loadingModels.value = true;
+  modelsError.value = null;
+
+  try {
+    const response = await configApi.getAvailableModels(
+      serviceType as AIServiceType,
+      functionType as FunctionType,
+      apiKey,
+      endpoint
+    );
+    availableModels.value = response.models;
+
+    if (response.models.length === 0) {
+      modelsError.value = '未找到适用于当前功能类型的模型';
+    }
+  } catch (e) {
+    console.error('Failed to load models:', e);
+    modelsError.value = '加载模型列表失败，请检查API Key和端点地址';
+  } finally {
+    loadingModels.value = false;
+  }
+};
+
 const saveService = async () => {
   await configStore.saveAIService(serviceForm.value);
   showServiceModal.value = false;
@@ -77,6 +125,8 @@ const resetServiceForm = () => {
     model: '',
     isEnabled: false
   };
+  availableModels.value = [];
+  modelsError.value = null;
 };
 
 const savePrompt = async () => {
@@ -312,11 +362,43 @@ const getServiceLabel = (type: AIServiceType) => {
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">端点地址（可选）</label>
-              <input v-model="serviceForm.endpoint" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              <input v-model="serviceForm.endpoint" type="text" placeholder="默认使用官方API地址" class="w-full px-4 py-2 border border-gray-300 rounded-lg" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">模型名称</label>
-              <input v-model="serviceForm.model" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">模型选择</label>
+              <div class="flex gap-2">
+                <select
+                  v-if="availableModels.length > 0"
+                  v-model="serviceForm.model"
+                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="">请选择模型</option>
+                  <option v-for="model in availableModels" :key="model.id" :value="model.id">
+                    {{ model.name }}
+                  </option>
+                </select>
+                <input
+                  v-else
+                  v-model="serviceForm.model"
+                  type="text"
+                  placeholder="点击右侧按钮加载模型列表"
+                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                />
+                <button
+                  @click="loadModels"
+                  :disabled="loadingModels || !serviceForm.apiKey"
+                  class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {{ loadingModels ? '加载中...' : '加载模型' }}
+                </button>
+              </div>
+              <p v-if="modelsError" class="text-xs text-red-500 mt-1">{{ modelsError }}</p>
+              <p v-else-if="availableModels.length > 0" class="text-xs text-green-600 mt-1">
+                已加载 {{ availableModels.length }} 个适用于当前功能的模型
+              </p>
+              <p v-else class="text-xs text-gray-500 mt-1">
+                输入API Key后点击"加载模型"获取可用模型列表，或手动输入模型名称
+              </p>
             </div>
           </div>
         </div>

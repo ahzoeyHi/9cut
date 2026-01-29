@@ -1,6 +1,11 @@
 import { taskModel } from '../models/task';
 import type { Task } from '../types';
 import { generateStoryboards } from '../services/generation/storyboard';
+import { generateImage } from '../services/generation/image';
+import { generateVideo } from '../services/generation/video';
+import { generateSpeech } from '../services/generation/speech';
+import { generateNarration } from '../services/generation/narration';
+import { mergeVideos } from '../services/generation/merge';
 
 // 简单的任务处理器
 class TaskProcessor {
@@ -49,52 +54,67 @@ class TaskProcessor {
         case 'storyboard':
           if (task.project_id) {
             await generateStoryboards(task.project_id, task.id);
+          } else {
+            taskModel.update(task.id, {
+              status: 'failed',
+              error: 'Missing project_id for storyboard generation'
+            });
           }
           break;
 
         case 'image':
-          // TODO: 实现图片生成
-          taskModel.update(task.id, {
-            status: 'completed',
-            progress: 100,
-            result: { message: 'Image generation not implemented yet' }
-          });
+          if (task.storyboard_id) {
+            await generateImage(task.storyboard_id, task.id);
+          } else {
+            taskModel.update(task.id, {
+              status: 'failed',
+              error: 'Missing storyboard_id for image generation'
+            });
+          }
           break;
 
         case 'video':
-          // TODO: 实现视频生成
-          taskModel.update(task.id, {
-            status: 'completed',
-            progress: 100,
-            result: { message: 'Video generation not implemented yet' }
-          });
+          if (task.storyboard_id) {
+            await generateVideo(task.storyboard_id, task.id);
+          } else {
+            taskModel.update(task.id, {
+              status: 'failed',
+              error: 'Missing storyboard_id for video generation'
+            });
+          }
           break;
 
         case 'narration':
-          // TODO: 实现口播文案生成
-          taskModel.update(task.id, {
-            status: 'completed',
-            progress: 100,
-            result: { message: 'Narration generation not implemented yet' }
-          });
+          if (task.project_id) {
+            await generateNarration(task.project_id, task.id);
+          } else {
+            taskModel.update(task.id, {
+              status: 'failed',
+              error: 'Missing project_id for narration generation'
+            });
+          }
           break;
 
         case 'speech':
-          // TODO: 实现语音生成
-          taskModel.update(task.id, {
-            status: 'completed',
-            progress: 100,
-            result: { message: 'Speech generation not implemented yet' }
-          });
+          if (task.storyboard_id) {
+            await generateSpeech(task.storyboard_id, task.id);
+          } else {
+            taskModel.update(task.id, {
+              status: 'failed',
+              error: 'Missing storyboard_id for speech generation'
+            });
+          }
           break;
 
         case 'merge':
-          // TODO: 实现视频合并
-          taskModel.update(task.id, {
-            status: 'completed',
-            progress: 100,
-            result: { message: 'Video merge not implemented yet' }
-          });
+          if (task.project_id) {
+            await mergeVideos(task.project_id, task.id);
+          } else {
+            taskModel.update(task.id, {
+              status: 'failed',
+              error: 'Missing project_id for video merge'
+            });
+          }
           break;
 
         default:

@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  9cut:
+    image: crpi-umndlxo5qzmbd6ji.cn-beijing.personal.cr.aliyuncs.com/ahzoey/ai-spoken:latest
+    container_name: 9cut-app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "3000:3000"
+    volumes:
+      # 数据持久化
+      - 9cut-uploads:/app/server/uploads
+      - 9cut-generated:/app/server/generated
+      - 9cut-database:/app/server
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  9cut-uploads:
+    driver: local
+  9cut-generated:
+    driver: local
+  9cut-database:
+    driver: local

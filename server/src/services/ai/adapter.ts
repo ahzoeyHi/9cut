@@ -1,4 +1,4 @@
-import type { AIServiceConfig, AIServiceType } from '../types';
+import type { AIServiceConfig, AIServiceType } from '../../types';
 
 // 文本生成选项
 export interface TextGenerationOptions {

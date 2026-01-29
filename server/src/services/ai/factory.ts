@@ -7,6 +7,11 @@ import type {
 } from './adapter';
 import { OpenAIAdapter } from './openai';
 import { ClaudeAdapter } from './claude';
+import { GeminiAdapter } from './gemini'; 
+import { QwenAdapter } from './qwen';
+import { VolcengineAdapter } from './volcengine';
+import { OpenAIImageAdapter } from './openai-image';
+import { OpenAITTSAdapter } from './openai-tts';
 import { aiServiceConfigModel } from '../../models/config';
 
 export class AIAdapterFactory {
@@ -17,27 +22,32 @@ export class AIAdapterFactory {
       case 'claude':
         return new ClaudeAdapter(config);
       case 'gemini':
-        // TODO: 实现Gemini适配器
-        throw new Error('Gemini adapter not implemented yet');
+        return new GeminiAdapter(config);
       case 'qwen':
-        // TODO: 实现千问适配器
-        throw new Error('Qwen adapter not implemented yet');
+        return new QwenAdapter(config);
       case 'volcengine':
-        // TODO: 实现火山引擎适配器
-        throw new Error('Volcengine adapter not implemented yet');
+        return new VolcengineAdapter(config);
       default:
         throw new Error(`Unsupported service type: ${config.service_type}`);
     }
   }
 
-  static createImageAdapter(_config: AIServiceConfig): ImageGenerationAdapter {
-    // TODO: 实现图片生成适配器
-    throw new Error('Image adapter not implemented yet');
+  static createImageAdapter(config: AIServiceConfig): ImageGenerationAdapter {
+    switch (config.service_type) {
+      case 'openai':
+        return new OpenAIImageAdapter(config);
+      default:
+        throw new Error(`Unsupported image service type: ${config.service_type}`);
+    }
   }
 
-  static createSpeechAdapter(_config: AIServiceConfig): SpeechSynthesisAdapter {
-    // TODO: 实现语音合成适配器
-    throw new Error('Speech adapter not implemented yet');
+  static createSpeechAdapter(config: AIServiceConfig): SpeechSynthesisAdapter {
+    switch (config.service_type) {
+      case 'openai':
+        return new OpenAITTSAdapter(config);
+      default:
+        throw new Error(`Unsupported speech service type: ${config.service_type}`);
+    }
   }
 
   static createVideoAdapter(_config: AIServiceConfig): VideoGenerationAdapter {

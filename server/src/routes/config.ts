@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { aiServiceConfigModel } from '../models/config';
 import { promptModel } from '../models/prompt';
-import type { FunctionType } from '../types';
+import { getAvailableModels } from '../services/ai/models';
+import type { FunctionType, AIServiceType } from '../types';
 
 const router = Router();
 
@@ -103,6 +104,32 @@ router.post('/ai-services/:id/enable', (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error enabling AI service:', error);
     res.status(500).json({ message: '启用AI服务失败' });
+  }
+});
+
+// 获取可用模型列表
+router.post('/ai-services/models', async (req: Request, res: Response) => {
+  try {
+    const { serviceType, functionType, apiKey, endpoint } = req.body;
+
+    if (!serviceType || !functionType || !apiKey) {
+      return res.status(400).json({ message: '缺少必要参数' });
+    }
+
+    const models = await getAvailableModels(
+      serviceType as AIServiceType,
+      functionType as FunctionType,
+      apiKey,
+      endpoint
+    );
+
+    res.json({ models });
+  } catch (error) {
+    console.error('Error fetching models:', error);
+    res.status(500).json({
+      message: '获取模型列表失败',
+      error: error instanceof Error ? error.message : '未知错误'
+    });
   }
 });
 
