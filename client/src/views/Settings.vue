@@ -15,6 +15,7 @@ const testingId = ref<string | null>(null);
 const availableModels = ref<ModelInfo[]>([]);
 const loadingModels = ref(false);
 const modelsError = ref<string | null>(null);
+const useCustomModel = ref(false); // 是否使用自定义模型
 
 const serviceForm = ref<Partial<AIServiceConfig>>({
   serviceType: 'openai',
@@ -52,9 +53,9 @@ onMounted(async () => {
   await configStore.fetchPrompts();
 });
 
-// 监听服务类型、功能类型或API Key变化，清空模型列表
+// 监听服务类型变化，清空模型列表（功能类型变化不影响模型列表）
 watch(
-  () => [serviceForm.value.serviceType, serviceForm.value.functionType],
+  () => serviceForm.value.serviceType,
   () => {
     availableModels.value = [];
     serviceForm.value.model = '';
@@ -64,10 +65,10 @@ watch(
 
 // 加载模型列表
 const loadModels = async () => {
-  const { serviceType, functionType, apiKey, endpoint } = serviceForm.value;
+  const { serviceType, apiKey, endpoint } = serviceForm.value;
 
-  if (!serviceType || !functionType || !apiKey) {
-    modelsError.value = '请先填写服务类型、功能类型和API Key';
+  if (!serviceType || !apiKey) {
+    modelsError.value = '请先填写服务类型和API Key';
     return;
   }
 
@@ -77,14 +78,14 @@ const loadModels = async () => {
   try {
     const response = await configApi.getAvailableModels(
       serviceType as AIServiceType,
-      functionType as FunctionType,
+      serviceForm.value.functionType as FunctionType,
       apiKey,
       endpoint
     );
     availableModels.value = response.models;
 
     if (response.models.length === 0) {
-      modelsError.value = '未找到适用于当前功能类型的模型';
+      modelsError.value = '未获取到模型列表';
     }
   } catch (e) {
     console.error('Failed to load models:', e);
@@ -127,6 +128,15 @@ const resetServiceForm = () => {
   };
   availableModels.value = [];
   modelsError.value = null;
+  useCustomModel.value = false;
+};
+
+// 切换自定义模型模式
+const toggleCustomModel = () => {
+  useCustomModel.value = !useCustomModel.value;
+  if (useCustomModel.value) {
+    availableModels.value = [];
+  }
 };
 
 const savePrompt = async () => {
@@ -365,40 +375,65 @@ const getServiceLabel = (type: AIServiceType) => {
               <input v-model="serviceForm.endpoint" type="text" placeholder="默认使用官方API地址" class="w-full px-4 py-2 border border-gray-300 rounded-lg" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">模型选择</label>
-              <div class="flex gap-2">
-                <select
-                  v-if="availableModels.length > 0"
-                  v-model="serviceForm.model"
-                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                >
-                  <option value="">请选择模型</option>
-                  <option v-for="model in availableModels" :key="model.id" :value="model.id">
-                    {{ model.name }}
-                  </option>
-                </select>
-                <input
-                  v-else
-                  v-model="serviceForm.model"
-                  type="text"
-                  placeholder="点击右侧按钮加载模型列表"
-                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                />
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-sm font-medium text-gray-700">模型选择</label>
                 <button
-                  @click="loadModels"
-                  :disabled="loadingModels || !serviceForm.apiKey"
-                  class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  @click="toggleCustomModel"
+                  class="text-xs text-primary-600 hover:text-primary-800"
                 >
-                  {{ loadingModels ? '加载中...' : '加载模型' }}
+                  {{ useCustomModel ? '从列表选择' : '手动输入模型' }}
                 </button>
               </div>
-              <p v-if="modelsError" class="text-xs text-red-500 mt-1">{{ modelsError }}</p>
-              <p v-else-if="availableModels.length > 0" class="text-xs text-green-600 mt-1">
-                已加载 {{ availableModels.length }} 个适用于当前功能的模型
-              </p>
-              <p v-else class="text-xs text-gray-500 mt-1">
-                输入API Key后点击"加载模型"获取可用模型列表，或手动输入模型名称
-              </p>
+
+              <!-- 自定义模型输入 -->
+              <div v-if="useCustomModel">
+                <input
+                  v-model="serviceForm.model"
+                  type="text"
+                  placeholder="输入模型名称，如: gpt-4o, claude-3-opus-20240229"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                  适用于中转站或自定义API，直接输入模型名称即可
+                </p>
+              </div>
+
+              <!-- 从列表选择模型 -->
+              <div v-else>
+                <div class="flex gap-2">
+                  <select
+                    v-if="availableModels.length > 0"
+                    v-model="serviceForm.model"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                  >
+                    <option value="">请选择模型</option>
+                    <option v-for="model in availableModels" :key="model.id" :value="model.id">
+                      {{ model.name }}
+                    </option>
+                  </select>
+                  <input
+                    v-else
+                    v-model="serviceForm.model"
+                    type="text"
+                    placeholder="点击右侧按钮加载模型列表"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                  />
+                  <button
+                    @click="loadModels"
+                    :disabled="loadingModels || !serviceForm.apiKey"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    {{ loadingModels ? '加载中...' : '加载模型' }}
+                  </button>
+                </div>
+                <p v-if="modelsError" class="text-xs text-red-500 mt-1">{{ modelsError }}</p>
+                <p v-else-if="availableModels.length > 0" class="text-xs text-green-600 mt-1">
+                  已加载 {{ availableModels.length }} 个模型，请选择需要使用的模型
+                </p>
+                <p v-else class="text-xs text-gray-500 mt-1">
+                  输入API Key后点击"加载模型"获取可用模型列表
+                </p>
+              </div>
             </div>
           </div>
         </div>

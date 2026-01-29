@@ -72,7 +72,7 @@ const VOLCENGINE_MODELS: ModelInfo[] = [
 ];
 
 /**
- * 获取OpenAI模型列表
+ * 获取OpenAI模型列表（返回所有模型，不过滤）
  */
 async function fetchOpenAIModels(apiKey: string, endpoint?: string): Promise<ModelInfo[]> {
   const baseUrl = endpoint || 'https://api.openai.com/v1';
@@ -90,14 +90,12 @@ async function fetchOpenAIModels(apiKey: string, endpoint?: string): Promise<Mod
 
     const data = await response.json() as { data: { id: string; owned_by?: string }[] };
 
-    return data.data.map(model => {
-      const capabilities = getOpenAIModelCapabilities(model.id);
-      return {
-        id: model.id,
-        name: model.id,
-        capabilities
-      };
-    }).filter(m => m.capabilities.length > 0);
+    // 返回所有模型，让用户自己选择
+    return data.data.map(model => ({
+      id: model.id,
+      name: model.id,
+      capabilities: ['text', 'image', 'speech', 'video'] as ModelCapability[] // 标记为全能力，让用户自行选择
+    })).sort((a, b) => a.id.localeCompare(b.id));
   } catch (error) {
     console.error('Error fetching OpenAI models:', error);
     throw error;
@@ -179,7 +177,7 @@ async function fetchClaudeModels(_apiKey: string, _endpoint?: string): Promise<M
 }
 
 /**
- * 获取通义千问模型列表
+ * 获取通义千问模型列表（返回所有模型，不过滤）
  */
 async function fetchQwenModels(apiKey: string, endpoint?: string): Promise<ModelInfo[]> {
   const baseUrl = endpoint || 'https://dashscope.aliyuncs.com/api/v1';
@@ -199,14 +197,12 @@ async function fetchQwenModels(apiKey: string, endpoint?: string): Promise<Model
 
     const data = await response.json() as { data: { id: string; name?: string }[] };
 
-    return data.data.map(model => {
-      const capabilities = getQwenModelCapabilities(model.id);
-      return {
-        id: model.id,
-        name: model.name || model.id,
-        capabilities
-      };
-    }).filter(m => m.capabilities.length > 0);
+    // 返回所有模型，让用户自己选择
+    return data.data.map(model => ({
+      id: model.id,
+      name: model.name || model.id,
+      capabilities: ['text', 'image', 'speech', 'video'] as ModelCapability[]
+    })).sort((a, b) => a.id.localeCompare(b.id));
   } catch (error) {
     console.error('Error fetching Qwen models:', error);
     return QWEN_MODELS;
@@ -233,7 +229,7 @@ function getQwenModelCapabilities(modelId: string): ModelCapability[] {
 }
 
 /**
- * 获取火山引擎模型列表
+ * 获取火山引擎模型列表（返回所有模型，不过滤）
  */
 async function fetchVolcengineModels(apiKey: string, endpoint?: string): Promise<ModelInfo[]> {
   const baseUrl = endpoint || 'https://ark.cn-beijing.volces.com/api/v3';
@@ -251,11 +247,12 @@ async function fetchVolcengineModels(apiKey: string, endpoint?: string): Promise
 
     const data = await response.json() as { data: { id: string; owned_by?: string }[] };
 
+    // 返回所有模型，让用户自己选择
     return data.data.map(model => ({
       id: model.id,
       name: model.id,
-      capabilities: ['text'] as ModelCapability[]
-    }));
+      capabilities: ['text', 'image', 'speech', 'video'] as ModelCapability[]
+    })).sort((a, b) => a.id.localeCompare(b.id));
   } catch (error) {
     console.error('Error fetching Volcengine models:', error);
     return VOLCENGINE_MODELS;
@@ -299,13 +296,14 @@ export function filterModelsByFunction(
 
 /**
  * 获取指定服务和功能类型的可用模型列表
+ * 注意：现在返回所有模型，不再按功能类型过滤，让用户自己选择
  */
 export async function getAvailableModels(
   serviceType: AIServiceType,
-  functionType: FunctionType,
+  _functionType: FunctionType,
   apiKey: string,
   endpoint?: string
 ): Promise<ModelInfo[]> {
-  const allModels = await fetchModels(serviceType, apiKey, endpoint);
-  return filterModelsByFunction(allModels, functionType);
+  // 直接返回所有模型，不再过滤
+  return fetchModels(serviceType, apiKey, endpoint);
 }
