@@ -27,6 +27,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '9宫格视图' }
   },
   {
+    path: '/project/:id/script',
+    name: 'ScriptEditor',
+    component: () => import('../views/ScriptEditor.vue'),
+    meta: { title: '口播稿生成' }
+  },
+  {
     path: '/resources',
     name: 'Resources',
     component: () => import('../views/Resources.vue'),

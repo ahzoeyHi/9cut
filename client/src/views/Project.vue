@@ -61,6 +61,10 @@ const goToStoryboard = () => {
 const goToNineGrid = () => {
   router.push(`/project/${projectId.value}/nine-grid`);
 };
+
+const goToScriptEditor = () => {
+  router.push(`/project/${projectId.value}/script`);
+};
 </script>
 
 <template>
@@ -77,6 +81,7 @@ const goToNineGrid = () => {
           </h1>
         </div>
         <nav class="flex items-center gap-4">
+          <button @click="goToScriptEditor" class="text-gray-600 hover:text-gray-900">口播稿生成</button>
           <button @click="goToStoryboard" class="text-gray-600 hover:text-gray-900">分镜编辑</button>
           <button @click="goToNineGrid" class="text-gray-600 hover:text-gray-900">9宫格视图</button>
         </nav>
@@ -206,6 +211,13 @@ const goToNineGrid = () => {
           <div class="bg-white rounded-lg shadow-sm p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">快捷操作</h2>
             <div class="space-y-3">
+              <button
+                @click="goToScriptEditor"
+                class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <div class="font-medium text-gray-900">口播稿生成</div>
+                <div class="text-sm text-gray-500">AI辅助生成和修改口播稿</div>
+              </button>
               <button
                 @click="goToStoryboard"
                 class="w-full px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"

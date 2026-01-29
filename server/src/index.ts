@@ -11,6 +11,8 @@ import storyboardRoutes from './routes/storyboard';
 import resourceRoutes from './routes/resource';
 import configRoutes from './routes/config';
 import generationRoutes from './routes/generation';
+import scriptRoutes from './routes/script';
+import generationSessionRoutes from './routes/generationSession';
 
 const app = express();
 
@@ -29,6 +31,8 @@ app.use('/api', storyboardRoutes); // 包含 /projects/:projectId/storyboards �
 app.use('/api/resources', resourceRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api', generationRoutes); // 包含生成任务和任务状态路由
+app.use('/api', scriptRoutes); // 口播稿会话路由
+app.use('/api', generationSessionRoutes); // 生成修改会话路由
 
 // 健康检查
 app.get('/api/health', (_req, res) => {

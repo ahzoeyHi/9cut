@@ -3,7 +3,9 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStoryboardStore } from '../stores/storyboard';
 import { generationApi } from '../api/generation';
+import GenerationEditDialog from '../components/GenerationEditDialog.vue';
 import type { Storyboard } from '../types';
+import type { GenerationSessionType } from '../api/generationSession';
 
 const route = useRoute();
 const router = useRouter();
@@ -13,6 +15,12 @@ const projectId = computed(() => route.params.id as string);
 const selectedStoryboard = ref<Storyboard | null>(null);
 const editingId = ref<string | null>(null);
 const editForm = ref({ sceneDescription: '', visualDescription: '', duration: 3000 });
+
+// 多轮修改对话框状态
+const showEditDialog = ref(false);
+const editDialogType = ref<GenerationSessionType>('storyboard');
+const editDialogStoryboardId = ref<string | undefined>(undefined);
+const editDialogTitle = ref<string>('');
 
 onMounted(async () => {
   await storyboardStore.fetchStoryboards(projectId.value);
@@ -61,6 +69,25 @@ const generateSpeech = async (id: string) => {
   } catch (e) {
     console.error(e);
   }
+};
+
+// 打开AI修改对话框
+const openEditDialog = (type: GenerationSessionType, storyboard: Storyboard) => {
+  editDialogType.value = type;
+  editDialogStoryboardId.value = storyboard.id;
+  editDialogTitle.value = `${storyboard.sceneDescription || '分镜'} - ${type === 'storyboard' ? '分镜' : type === 'image' ? '图片' : type === 'video' ? '视频' : '语音'}修改`;
+  showEditDialog.value = true;
+};
+
+// 关闭对话框
+const closeEditDialog = () => {
+  showEditDialog.value = false;
+};
+
+// 修改应用后刷新
+const handleEditApplied = async () => {
+  showEditDialog.value = false;
+  await storyboardStore.fetchStoryboards(projectId.value);
 };
 
 const getStatusBadge = (status: string) => {
@@ -205,10 +232,22 @@ const getStatusBadge = (status: string) => {
                   编辑
                 </button>
                 <button
+                  @click="openEditDialog('storyboard', storyboard)"
+                  class="px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded"
+                >
+                  AI修改
+                </button>
+                <button
                   @click="generateImage(storyboard.id)"
                   class="px-3 py-1.5 text-sm text-primary-600 hover:bg-primary-50 rounded"
                 >
                   生成图片
+                </button>
+                <button
+                  @click="openEditDialog('image', storyboard)"
+                  class="px-3 py-1.5 text-sm text-purple-600 hover:bg-purple-50 rounded"
+                >
+                  修改图片
                 </button>
                 <button
                   @click="generateVideo(storyboard.id)"
@@ -228,5 +267,16 @@ const getStatusBadge = (status: string) => {
         </div>
       </div>
     </main>
+
+    <!-- AI修改对话框 -->
+    <GenerationEditDialog
+      :visible="showEditDialog"
+      :type="editDialogType"
+      :project-id="projectId"
+      :storyboard-id="editDialogStoryboardId"
+      :title="editDialogTitle"
+      @close="closeEditDialog"
+      @applied="handleEditApplied"
+    />
   </div>
 </template>

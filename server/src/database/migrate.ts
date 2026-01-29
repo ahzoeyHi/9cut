@@ -121,7 +121,66 @@ const migrations = [
   `CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id)`,
   `CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)`,
   `CREATE INDEX IF NOT EXISTS idx_prompts_function ON prompts(function_type)`,
-  `CREATE INDEX IF NOT EXISTS idx_ai_configs_function ON ai_service_configs(function_type)`
+  `CREATE INDEX IF NOT EXISTS idx_ai_configs_function ON ai_service_configs(function_type)`,
+
+  // 口播稿会话表
+  `CREATE TABLE IF NOT EXISTS script_sessions (
+    id TEXT PRIMARY KEY,
+    project_id TEXT NOT NULL,
+    title TEXT,
+    current_script TEXT,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+  )`,
+
+  // 口播稿会话消息表
+  `CREATE TABLE IF NOT EXISTS script_messages (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    script_version TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES script_sessions(id) ON DELETE CASCADE
+  )`,
+
+  // 口播稿会话索引
+  `CREATE INDEX IF NOT EXISTS idx_script_sessions_project ON script_sessions(project_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_script_messages_session ON script_messages(session_id)`,
+
+  // 生成会话表（支持分镜、图片、视频、语音的多轮修改）
+  `CREATE TABLE IF NOT EXISTS generation_sessions (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    project_id TEXT NOT NULL,
+    storyboard_id TEXT,
+    title TEXT,
+    current_result TEXT,
+    status TEXT DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (storyboard_id) REFERENCES storyboards(id) ON DELETE CASCADE
+  )`,
+
+  // 生成会话消息表
+  `CREATE TABLE IF NOT EXISTS generation_messages (
+    id TEXT PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    result_snapshot TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES generation_sessions(id) ON DELETE CASCADE
+  )`,
+
+  // 生成会话索引
+  `CREATE INDEX IF NOT EXISTS idx_generation_sessions_project ON generation_sessions(project_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_generation_sessions_storyboard ON generation_sessions(storyboard_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_generation_sessions_type ON generation_sessions(type)`,
+  `CREATE INDEX IF NOT EXISTS idx_generation_messages_session ON generation_messages(session_id)`
 ];
 
 export function runMigrations(): void {
