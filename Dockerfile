@@ -38,7 +38,8 @@ RUN npm run build
 FROM node:20-alpine AS production
 
 # 安装 nginx 和必要工具
-RUN apk add --no-cache nginx python3 make g++
+RUN apk add --no-cache nginx python3 build-base && \
+    ln -sf /usr/bin/python3 /usr/bin/python
 
 WORKDIR /app
 
@@ -48,7 +49,8 @@ COPY --from=server-builder /app/server/package*.json ./server/
 
 # 安装后端生产依赖（需要重新编译 better-sqlite3）
 WORKDIR /app/server
-RUN npm install --production
+RUN npm install --production && \
+    npm rebuild better-sqlite3
 
 # 复制前端构建产物
 WORKDIR /app

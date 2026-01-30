@@ -13,7 +13,7 @@ services:
       # 数据持久化
       - 9cut-uploads:/app/server/uploads
       - 9cut-generated:/app/server/generated
-      - 9cut-database:/app/server/data
+      - 9cut-data:/app/server/data
     env_file:
       - .env
     environment:
@@ -30,5 +30,5 @@ volumes:
     driver: local
   9cut-generated:
     driver: local
-  9cut-database:
+  9cut-data:
     driver: local
