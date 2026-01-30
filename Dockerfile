@@ -79,7 +79,7 @@ WORKDIR /app/server
 EXPOSE 80 3000
 
 # 数据卷
-VOLUME ["/app/server/uploads", "/app/server/generated", "/app/server/database.sqlite"]
+VOLUME ["/app/server/uploads", "/app/server/generated", "/app/server/data"]
 
 # 启动命令
 CMD ["/app/start.sh"]

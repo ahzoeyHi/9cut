@@ -7,7 +7,9 @@
       "Bash(dir:*)",
       "Bash(npx vue-tsc:*)",
       "Bash(npm run build)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker-compose up:*)"
     ],
     "deny": [],
     "ask": []

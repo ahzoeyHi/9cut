@@ -13,9 +13,11 @@ services:
       # 数据持久化
       - 9cut-uploads:/app/server/uploads
       - 9cut-generated:/app/server/generated
-      - 9cut-database:/app/server
+      - 9cut-database:/app/server/data
     env_file:
       - .env
+    environment:
+      - DATABASE_PATH=./data/database.sqlite
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
