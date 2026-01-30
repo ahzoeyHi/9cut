@@ -29,5 +29,9 @@ export const storyboardApi = {
 
   generateStoryboards(projectId: string, regenerate = false): Promise<{ taskId: string }> {
     return http.post(`/projects/${projectId}/storyboards/generate`, { regenerate });
+  },
+
+  regenerateStoryboard(id: string, instruction: string): Promise<StoryboardResponse & { success: boolean }> {
+    return http.post(`/storyboards/${id}/regenerate`, { instruction });
   }
 };

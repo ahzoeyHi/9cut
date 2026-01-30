@@ -90,6 +90,21 @@ export const generationSessionApi = {
     return http.post(`/generation-sessions/${sessionId}/apply-storyboard`);
   },
 
+  // 应用图片提示词修改
+  applyImageChanges(sessionId: string): Promise<{ success: boolean }> {
+    return http.post(`/generation-sessions/${sessionId}/apply-image`);
+  },
+
+  // 应用视频参数修改
+  applyVideoChanges(sessionId: string): Promise<{ success: boolean }> {
+    return http.post(`/generation-sessions/${sessionId}/apply-video`);
+  },
+
+  // 应用语音参数修改
+  applySpeechChanges(sessionId: string): Promise<{ success: boolean }> {
+    return http.post(`/generation-sessions/${sessionId}/apply-speech`);
+  },
+
   // 重新生成图片
   regenerateImage(sessionId: string, storyboardId: string): Promise<{ imagePath: string }> {
     return http.post(`/generation-sessions/${sessionId}/regenerate-image`, { storyboardId });

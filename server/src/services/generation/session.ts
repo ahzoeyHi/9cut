@@ -299,6 +299,88 @@ export function deleteGenerationSession(sessionId: string): boolean {
 }
 
 /**
+ * 应用视频参数修改
+ */
+export async function applyVideoChanges(sessionId: string): Promise<boolean> {
+  const session = generationSessionModel.findById(sessionId);
+  if (!session || !session.storyboard_id || !session.current_result) {
+    return false;
+  }
+
+  try {
+    // 尝试解析JSON结果
+    const result = JSON.parse(session.current_result);
+
+    const updateData: Record<string, unknown> = {};
+    if (result.duration !== undefined) {
+      updateData.duration = result.duration;
+    }
+    // 可以在这里添加更多视频相关字段的处理
+
+    if (Object.keys(updateData).length > 0) {
+      storyboardModel.update(session.storyboard_id, updateData);
+      return true;
+    }
+  } catch (e) {
+    console.error('Failed to parse video changes:', e);
+  }
+
+  return false;
+}
+
+/**
+ * 应用语音参数修改
+ */
+export async function applySpeechChanges(sessionId: string): Promise<boolean> {
+  const session = generationSessionModel.findById(sessionId);
+  if (!session || !session.storyboard_id || !session.current_result) {
+    return false;
+  }
+
+  try {
+    // 尝试解析JSON结果
+    const result = JSON.parse(session.current_result);
+
+    const updateData: Record<string, unknown> = {};
+    if (result.text !== undefined) {
+      updateData.narration = result.text;
+    }
+    // speed和pitch可以存在extra_config或类似字段中
+
+    if (Object.keys(updateData).length > 0) {
+      storyboardModel.update(session.storyboard_id, updateData);
+      return true;
+    }
+  } catch (e) {
+    console.error('Failed to parse speech changes:', e);
+  }
+
+  return false;
+}
+
+/**
+ * 应用图片提示词修改（保存到分镜的画面说明）
+ */
+export async function applyImageChanges(sessionId: string): Promise<boolean> {
+  const session = generationSessionModel.findById(sessionId);
+  if (!session || !session.storyboard_id || !session.current_result) {
+    return false;
+  }
+
+  try {
+    // 图片类型的结果是优化后的提示词，保存到画面说明
+    storyboardModel.update(session.storyboard_id, {
+      visual_description: session.current_result
+    });
+    return true;
+  } catch (e) {
+    console.error('Failed to apply image changes:', e);
+  }
+
+  return false;
+}
+
+/**
  * 重新生成图片（基于优化后的提示词）
  */
 export async function regenerateImage(

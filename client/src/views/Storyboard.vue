@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStoryboardStore } from '../stores/storyboard';
 import { generationApi } from '../api/generation';
+import { storyboardApi } from '../api/storyboard';
 import GenerationEditDialog from '../components/GenerationEditDialog.vue';
 import type { Storyboard } from '../types';
 import type { GenerationSessionType } from '../api/generationSession';
@@ -12,9 +13,14 @@ const router = useRouter();
 const storyboardStore = useStoryboardStore();
 
 const projectId = computed(() => route.params.id as string);
-const selectedStoryboard = ref<Storyboard | null>(null);
 const editingId = ref<string | null>(null);
 const editForm = ref({ sceneDescription: '', visualDescription: '', duration: 3000 });
+
+// 重新生成状态
+const regeneratingId = ref<string | null>(null);
+const regenerateInstruction = ref('');
+const regenerateStatus = ref<'idle' | 'input' | 'generating' | 'success' | 'error'>('idle');
+const regenerateMessage = ref('');
 
 // 多轮修改对话框状态
 const showEditDialog = ref(false);

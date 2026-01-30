@@ -14,6 +14,8 @@ const projectId = computed(() => route.params.id as string);
 const isEditing = ref(false);
 const editForm = ref({ name: '', description: '', script: '' });
 const generating = ref(false);
+const generationStatus = ref<'idle' | 'generating' | 'success' | 'error'>('idle');
+const generationMessage = ref('');
 
 onMounted(async () => {
   await projectStore.fetchProject(projectId.value);
@@ -39,16 +41,35 @@ const generateStoryboards = async () => {
   }
 
   generating.value = true;
+  generationStatus.value = 'generating';
+  generationMessage.value = '正在分析文案并生成分镜，请稍候...';
+
   try {
     // 先保存文案
     await projectStore.updateProject(projectId.value, { script: editForm.value.script });
+    generationMessage.value = '文案已保存，正在调用AI生成分镜...';
+
     // 调用生成接口
     await storyboardApi.generateStoryboards(projectId.value);
+    generationMessage.value = '分镜生成成功，正在加载...';
+
     // 刷新分镜列表
     await storyboardStore.fetchStoryboards(projectId.value);
-  } catch (e) {
+
+    generationStatus.value = 'success';
+    generationMessage.value = `成功生成 ${storyboardStore.storyboardCount} 个分镜`;
+
+    // 3秒后清除成功提示
+    setTimeout(() => {
+      if (generationStatus.value === 'success') {
+        generationStatus.value = 'idle';
+        generationMessage.value = '';
+      }
+    }, 3000);
+  } catch (e: any) {
     console.error(e);
-    alert('生成失败，请重试');
+    generationStatus.value = 'error';
+    generationMessage.value = e.response?.data?.message || e.message || '生成失败，请检查AI服务配置后重试';
   } finally {
     generating.value = false;
   }
@@ -171,7 +192,49 @@ const goToScriptEditor = () => {
               </span>
             </div>
 
-            <div v-if="storyboardStore.loading" class="flex justify-center py-8">
+            <!-- 生成状态提示 -->
+            <div v-if="generationStatus !== 'idle'" class="mb-4">
+              <!-- 生成中 -->
+              <div
+                v-if="generationStatus === 'generating'"
+                class="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+              >
+                <div class="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
+                <span class="text-blue-700">{{ generationMessage }}</span>
+              </div>
+
+              <!-- 成功 -->
+              <div
+                v-else-if="generationStatus === 'success'"
+                class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg"
+              >
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span class="text-green-700">{{ generationMessage }}</span>
+              </div>
+
+              <!-- 错误 -->
+              <div
+                v-else-if="generationStatus === 'error'"
+                class="p-4 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <div class="flex items-center gap-3">
+                  <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span class="text-red-700">{{ generationMessage }}</span>
+                </div>
+                <button
+                  @click="generationStatus = 'idle'; generationMessage = ''"
+                  class="mt-2 text-sm text-red-600 hover:text-red-700 underline"
+                >
+                  关闭提示
+                </button>
+              </div>
+            </div>
+
+            <div v-if="storyboardStore.loading || generating" class="flex justify-center py-8">
               <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
             </div>
 

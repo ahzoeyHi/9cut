@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { storyboardModel } from '../models/storyboard';
 import { taskModel } from '../models/task';
+import { regenerateSingleStoryboard } from '../services/generation/storyboard';
 
 const router = Router();
 
@@ -124,6 +125,31 @@ router.post('/projects/:projectId/storyboards/generate', (req: Request, res: Res
   } catch (error) {
     console.error('Error generating storyboards:', error);
     res.status(500).json({ message: '生成分镜失败' });
+  }
+});
+
+// 重新生成单个分镜
+router.post('/storyboards/:id/regenerate', async (req: Request, res: Response) => {
+  try {
+    const { instruction } = req.body;
+
+    if (!instruction || !instruction.trim()) {
+      return res.status(400).json({ message: '请输入修改指令' });
+    }
+
+    const result = await regenerateSingleStoryboard(req.params.id, instruction.trim());
+
+    if (!result.success) {
+      return res.status(400).json({ message: result.error });
+    }
+
+    res.json({
+      storyboard: result.storyboard,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error regenerating storyboard:', error);
+    res.status(500).json({ message: '重新生成分镜失败' });
   }
 });
 

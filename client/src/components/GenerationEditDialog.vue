@@ -32,6 +32,7 @@ const loadingSession = ref(false);
 // 消息输入
 const messageInput = ref('');
 const sending = ref(false);
+const saving = ref(false);
 const messagesContainer = ref<HTMLElement | null>(null);
 
 // 类型标签
@@ -46,6 +47,17 @@ const dialogTitle = computed(() => {
   return `${typeLabels[props.type]}修改 - AI辅助`;
 });
 
+// 保存按钮文本
+const saveButtonText = computed(() => {
+  const labels: Record<GenerationSessionType, string> = {
+    storyboard: '保存到分镜',
+    image: '保存提示词',
+    video: '保存视频参数',
+    speech: '保存语音参数'
+  };
+  return labels[props.type];
+});
+
 // 监听visible变化
 watch(() => props.visible, async (visible) => {
   if (visible) {
@@ -53,7 +65,7 @@ watch(() => props.visible, async (visible) => {
     // 如果没有会话，自动创建一个
     if (sessions.value.length === 0) {
       await createSession();
-    } else {
+    } else if (sessions.value[0]) {
       // 选择最新的会话
       await selectSession(sessions.value[0].id);
     }
@@ -145,22 +157,50 @@ async function sendMessage() {
   }
 }
 
-// 应用修改
+// 应用修改（保存到对应位置）
 async function applyChanges() {
   if (!currentSession.value?.currentResult) {
     alert('当前没有可应用的修改');
     return;
   }
 
+  saving.value = true;
   try {
-    if (props.type === 'storyboard') {
-      await generationSessionApi.applyStoryboardChanges(currentSession.value.id);
-      alert('分镜修改已应用！');
+    let success = false;
+    let message = '';
+
+    switch (props.type) {
+      case 'storyboard':
+        await generationSessionApi.applyStoryboardChanges(currentSession.value.id);
+        message = '分镜修改已保存！';
+        success = true;
+        break;
+      case 'image':
+        await generationSessionApi.applyImageChanges(currentSession.value.id);
+        message = '图片提示词已保存到画面说明！';
+        success = true;
+        break;
+      case 'video':
+        await generationSessionApi.applyVideoChanges(currentSession.value.id);
+        message = '视频参数已保存！';
+        success = true;
+        break;
+      case 'speech':
+        await generationSessionApi.applySpeechChanges(currentSession.value.id);
+        message = '语音参数已保存！';
+        success = true;
+        break;
     }
-    emit('applied', currentSession.value.currentResult);
+
+    if (success) {
+      alert(message);
+      emit('applied', currentSession.value.currentResult);
+    }
   } catch (e: any) {
     console.error('Failed to apply changes:', e);
-    alert(e.response?.data?.message || '应用修改失败');
+    alert(e.response?.data?.message || '保存修改失败');
+  } finally {
+    saving.value = false;
   }
 }
 
@@ -338,13 +378,15 @@ const promptExamples: Record<GenerationSessionType, string[]> = {
             <pre class="whitespace-pre-wrap text-xs text-gray-700 font-mono">{{ currentSession.currentResult }}</pre>
           </div>
           <div class="p-4 border-t space-y-2">
+            <!-- 统一的保存按钮 -->
             <button
-              v-if="type === 'storyboard'"
               @click="applyChanges"
-              class="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
+              :disabled="saving"
+              class="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm"
             >
-              应用到分镜
+              {{ saving ? '保存中...' : saveButtonText }}
             </button>
+            <!-- 图片类型额外的重新生成按钮 -->
             <button
               v-if="type === 'image' && storyboardId"
               @click="regenerateImageHandler"

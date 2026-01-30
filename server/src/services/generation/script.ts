@@ -1,5 +1,6 @@
 import { scriptSessionModel, scriptMessageModel } from '../../models/scriptSession';
 import type { ScriptSession, ScriptMessage } from '../../models/scriptSession';
+import { projectModel } from '../../models/project';
 import { AIAdapterFactory } from '../ai/factory';
 import type { TextGenerationAdapter } from '../ai/adapter';
 
@@ -158,13 +159,20 @@ export function deleteSession(sessionId: string): boolean {
 /**
  * 应用口播稿到项目
  */
-export function applyScriptToProject(sessionId: string): ScriptSession | null {
+export function applyScriptToProject(sessionId: string): { session: ScriptSession; project: any } | null {
   const session = scriptSessionModel.findById(sessionId);
   if (!session || !session.current_script) {
     return null;
   }
 
-  // 这里可以将口播稿应用到项目中
-  // 目前仅返回会话信息
-  return session;
+  // 将口播稿保存到项目的 script 字段
+  const project = projectModel.update(session.project_id, {
+    script: session.current_script
+  });
+
+  if (!project) {
+    return null;
+  }
+
+  return { session, project };
 }

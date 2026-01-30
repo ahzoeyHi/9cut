@@ -87,7 +87,7 @@ export const useStoryboardStore = defineStore('storyboard', () => {
   function updateStoryboardLocally(id: string, data: Partial<Storyboard>) {
     const index = storyboards.value.findIndex(s => s.id === id);
     if (index !== -1) {
-      storyboards.value[index] = { ...storyboards.value[index], ...data };
+      storyboards.value[index] = { ...storyboards.value[index], ...data } as Storyboard;
     }
   }
 

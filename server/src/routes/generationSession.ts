@@ -8,6 +8,9 @@ import {
   updateGenerationSession,
   deleteGenerationSession,
   applyStoryboardChanges,
+  applyImageChanges,
+  applyVideoChanges,
+  applySpeechChanges,
   regenerateImage
 } from '../services/generation/session';
 import type { GenerationSessionType } from '../models/generationSession';
@@ -193,6 +196,51 @@ router.post('/generation-sessions/:id/apply-storyboard', async (req: Request, re
   } catch (error) {
     console.error('Error applying storyboard changes:', error);
     res.status(500).json({ message: '应用分镜修改失败' });
+  }
+});
+
+// 应用图片提示词修改
+router.post('/generation-sessions/:id/apply-image', async (req: Request, res: Response) => {
+  try {
+    const success = await applyImageChanges(req.params.id);
+    if (!success) {
+      return res.status(400).json({ message: '应用修改失败，请检查会话状态' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error applying image changes:', error);
+    res.status(500).json({ message: '应用图片修改失败' });
+  }
+});
+
+// 应用视频参数修改
+router.post('/generation-sessions/:id/apply-video', async (req: Request, res: Response) => {
+  try {
+    const success = await applyVideoChanges(req.params.id);
+    if (!success) {
+      return res.status(400).json({ message: '应用修改失败，请检查会话状态和结果格式' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error applying video changes:', error);
+    res.status(500).json({ message: '应用视频修改失败' });
+  }
+});
+
+// 应用语音参数修改
+router.post('/generation-sessions/:id/apply-speech', async (req: Request, res: Response) => {
+  try {
+    const success = await applySpeechChanges(req.params.id);
+    if (!success) {
+      return res.status(400).json({ message: '应用修改失败，请检查会话状态和结果格式' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error applying speech changes:', error);
+    res.status(500).json({ message: '应用语音修改失败' });
   }
 });
 

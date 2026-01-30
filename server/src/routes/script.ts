@@ -142,14 +142,15 @@ router.post('/script-sessions/:id/messages', async (req: Request, res: Response)
 // 应用口播稿到项目
 router.post('/script-sessions/:id/apply', (req: Request, res: Response) => {
   try {
-    const session = applyScriptToProject(req.params.id);
-    if (!session) {
+    const result = applyScriptToProject(req.params.id);
+    if (!result) {
       return res.status(404).json({ message: '会话不存在或没有口播稿内容' });
     }
 
     res.json({
-      session: formatSession(session),
-      script: session.current_script
+      session: formatSession(result.session),
+      script: result.session.current_script,
+      success: true
     });
   } catch (error) {
     console.error('Error applying script:', error);
