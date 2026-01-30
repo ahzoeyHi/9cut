@@ -234,6 +234,15 @@ async function fetchDeepSeekModels(apiKey: string, endpoint?: string): Promise<M
 }
 
 /**
+ * 获取Grok模型列表（Grok API兼容OpenAI格式）
+ */
+async function fetchGrokModels(apiKey: string, endpoint?: string): Promise<ModelInfo[]> {
+  // 默认Grok API地址
+  const baseUrl = endpoint || 'https://api.x.ai/v1';
+  return fetchOpenAICompatibleModels(apiKey, baseUrl, 'grok');
+}
+
+/**
  * 通用的OpenAI兼容API模型获取函数
  */
 async function fetchOpenAICompatibleModels(apiKey: string, baseUrl: string, serviceType: AIServiceType): Promise<ModelInfo[]> {
@@ -298,6 +307,8 @@ export async function fetchModels(
       return fetchGLMModels(apiKey, endpoint);
     case 'deepseek':
       return fetchDeepSeekModels(apiKey, endpoint);
+    case 'grok':
+      return fetchGrokModels(apiKey, endpoint);
     default:
       throw new Error(`Unsupported service type: ${serviceType}`);
   }

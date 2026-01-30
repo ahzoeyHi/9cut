@@ -40,7 +40,8 @@ const serviceTypes: { value: AIServiceType; label: string }[] = [
   { value: 'qwen', label: '通义千问' },
   { value: 'kimi', label: 'Kimi' },
   { value: 'glm', label: '智谱GLM' },
-  { value: 'deepseek', label: 'DeepSeek' }
+  { value: 'deepseek', label: 'DeepSeek' },
+  { value: 'grok', label: 'Grok' }
 ];
 
 const functionTypes: { value: FunctionType; label: string }[] = [

@@ -149,6 +149,17 @@ const DEFAULT_DEEPSEEK_MODELS: ModelInfo[] = [
   { id: 'deepseek-r1', name: 'DeepSeek R1', capabilities: ['text'] },
 ];
 
+const DEFAULT_GROK_MODELS: ModelInfo[] = [
+  { id: 'grok-4.1', name: 'Grok 4.1', capabilities: ['text', 'image'] },
+  { id: 'grok-4.1-thinking', name: 'Grok 4.1 Thinking', capabilities: ['text', 'image'] },
+  { id: 'grok-imagine-0.9', name: 'Grok Imagine 0.9', capabilities: ['image', 'video'] },
+  { id: 'grok-4-fast', name: 'Grok 4 Fast', capabilities: ['text', 'image'] },
+  { id: 'grok-4-fast-expert', name: 'Grok 4 Fast Expert', capabilities: ['text', 'image'] },
+  { id: 'grok-4-expert', name: 'Grok 4 Expert', capabilities: ['text', 'image'] },
+  { id: 'grok-4-heavy', name: 'Grok 4 Heavy', capabilities: ['text', 'image'] },
+  { id: 'grok-3-fast', name: 'Grok 3 Fast', capabilities: ['text', 'image'] },
+];
+
 // 默认模型映射
 const DEFAULT_MODELS: Record<AIServiceType, ModelInfo[]> = {
   openai: DEFAULT_OPENAI_MODELS,
@@ -159,6 +170,7 @@ const DEFAULT_MODELS: Record<AIServiceType, ModelInfo[]> = {
   kimi: DEFAULT_KIMI_MODELS,
   glm: DEFAULT_GLM_MODELS,
   deepseek: DEFAULT_DEEPSEEK_MODELS,
+  grok: DEFAULT_GROK_MODELS,
 };
 
 // 环境变量名映射
@@ -171,6 +183,7 @@ const ENV_VAR_NAMES: Record<AIServiceType, string> = {
   kimi: 'KIMI_MODELS',
   glm: 'GLM_MODELS',
   deepseek: 'DEEPSEEK_MODELS',
+  grok: 'GROK_MODELS',
 };
 
 /**
@@ -196,7 +209,7 @@ export function getConfiguredModels(serviceType: AIServiceType): ModelInfo[] {
  * 获取所有服务的模型配置
  */
 export function getAllConfiguredModels(): Record<AIServiceType, ModelInfo[]> {
-  const services: AIServiceType[] = ['openai', 'claude', 'gemini', 'qwen', 'volcengine', 'kimi', 'glm', 'deepseek'];
+  const services: AIServiceType[] = ['openai', 'claude', 'gemini', 'qwen', 'volcengine', 'kimi', 'glm', 'deepseek', 'grok'];
   const result: Record<string, ModelInfo[]> = {};
 
   for (const service of services) {

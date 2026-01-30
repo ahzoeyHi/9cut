@@ -129,6 +129,11 @@ const DEFAULT_DEEPSEEK_MODELS = [
     { id: 'deepseek-v3.2', name: 'DeepSeek v3.2', capabilities: ['text'] },
     { id: 'deepseek-r1', name: 'DeepSeek R1', capabilities: ['text'] },
 ];
+const DEFAULT_GROK_MODELS = [
+    { id: 'grok-imagine-0.9', name: 'Grok Imagine 0.9', capabilities: ['image', 'video'] },
+    { id: 'grok-4.1-thinking', name: 'Grok 4.1 Thinking', capabilities: ['text'] },
+    { id: 'grok-4.1', name: 'Grok 4.1', capabilities: ['text'] },
+];
 // 默认模型映射
 const DEFAULT_MODELS = {
     openai: DEFAULT_OPENAI_MODELS,
@@ -139,6 +144,7 @@ const DEFAULT_MODELS = {
     kimi: DEFAULT_KIMI_MODELS,
     glm: DEFAULT_GLM_MODELS,
     deepseek: DEFAULT_DEEPSEEK_MODELS,
+    grok: DEFAULT_GROK_MODELS,
 };
 // 环境变量名映射
 const ENV_VAR_NAMES = {
@@ -150,6 +156,7 @@ const ENV_VAR_NAMES = {
     kimi: 'KIMI_MODELS',
     glm: 'GLM_MODELS',
     deepseek: 'DEEPSEEK_MODELS',
+    grok: 'GROK_MODELS',
 };
 /**
  * 获取指定服务的模型列表（优先从环境变量读取，否则使用默认值）
@@ -171,7 +178,7 @@ function getConfiguredModels(serviceType) {
  * 获取所有服务的模型配置
  */
 function getAllConfiguredModels() {
-    const services = ['openai', 'claude', 'gemini', 'qwen', 'volcengine', 'kimi', 'glm', 'deepseek'];
+    const services = ['openai', 'claude', 'gemini', 'qwen', 'volcengine', 'kimi', 'glm', 'deepseek', 'grok'];
     const result = {};
     for (const service of services) {
         result[service] = getConfiguredModels(service);
