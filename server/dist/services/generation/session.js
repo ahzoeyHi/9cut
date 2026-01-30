@@ -1,0 +1,357 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createGenerationSession = createGenerationSession;
+exports.sendGenerationMessage = sendGenerationMessage;
+exports.applyStoryboardChanges = applyStoryboardChanges;
+exports.getGenerationSessionWithMessages = getGenerationSessionWithMessages;
+exports.getStoryboardSessions = getStoryboardSessions;
+exports.getProjectGenerationSessions = getProjectGenerationSessions;
+exports.updateGenerationSession = updateGenerationSession;
+exports.deleteGenerationSession = deleteGenerationSession;
+exports.applyVideoChanges = applyVideoChanges;
+exports.applySpeechChanges = applySpeechChanges;
+exports.applyImageChanges = applyImageChanges;
+exports.regenerateImage = regenerateImage;
+const generationSession_1 = require("../../models/generationSession");
+const storyboard_1 = require("../../models/storyboard");
+const factory_1 = require("../ai/factory");
+// 各类型的系统提示词
+const SYSTEM_PROMPTS = {
+    storyboard: `你是一个专业的视频分镜脚本编辑助手。你的任务是根据用户的需求修改分镜内容。
+
+当前分镜信息会在对话中提供。请根据用户的修改要求：
+1. 调整场景描述，使其更加生动具体
+2. 优化画面说明，确保能准确指导图片生成
+3. 调整时长以匹配内容节奏
+4. 优化口播文案，使其更加口语化
+
+请以JSON格式返回修改后的分镜信息：
+{
+  "sceneDescription": "场景描述",
+  "visualDescription": "画面说明",
+  "duration": 3000,
+  "narration": "口播文案"
+}`,
+    image: `你是一个专业的AI图片生成提示词优化师。你的任务是根据用户的需求优化图片生成提示词。
+
+当前分镜和已生成的图片信息会在对话中提供。请根据用户的修改要求：
+1. 调整画面构图和元素
+2. 修改色调和风格
+3. 添加或移除特定元素
+4. 调整图片的情绪和氛围
+
+请返回优化后的图片生成提示词，直接输出提示词内容，不需要其他解释。`,
+    video: `你是一个专业的视频生成参数优化师。你的任务是根据用户的需求调整视频生成参数。
+
+当前分镜和视频信息会在对话中提供。请根据用户的修改要求：
+1. 调整过渡效果（淡入淡出、缩放、平移等）
+2. 修改视频时长和节奏
+3. 调整画面动画效果
+
+请以JSON格式返回优化后的视频参数：
+{
+  "transition": "fade|zoom|pan",
+  "duration": 3000,
+  "effect": "效果描述"
+}`,
+    speech: `你是一个专业的语音合成参数优化师。你的任务是根据用户的需求调整语音合成参数。
+
+当前口播文案会在对话中提供。请根据用户的修改要求：
+1. 调整语速（0.5-2.0）
+2. 调整音调
+3. 修改口播文案使其更适合朗读
+
+请以JSON格式返回优化后的语音参数和文案：
+{
+  "text": "优化后的口播文案",
+  "speed": 1.0,
+  "pitch": 1.0
+}`
+};
+/**
+ * 创建新的生成会话
+ */
+function createGenerationSession(type, projectId, storyboardId, title) {
+    return generationSession_1.generationSessionModel.create({
+        type,
+        project_id: projectId,
+        storyboard_id: storyboardId,
+        title
+    });
+}
+/**
+ * 获取会话历史消息并转换为聊天格式
+ */
+function getSessionMessages(sessionId) {
+    const messages = generationSession_1.generationMessageModel.findBySessionId(sessionId);
+    return messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+    }));
+}
+/**
+ * 构建上下文信息
+ */
+function buildContext(session) {
+    let context = '';
+    if (session.storyboard_id) {
+        const storyboard = storyboard_1.storyboardModel.findById(session.storyboard_id);
+        if (storyboard) {
+            context = `当前分镜信息：
+- 序号: ${storyboard.sequence + 1}
+- 场景描述: ${storyboard.scene_description || '未设置'}
+- 画面说明: ${storyboard.visual_description || '未设置'}
+- 时长: ${storyboard.duration}毫秒
+- 口播文案: ${storyboard.narration || '未设置'}
+- 状态: ${storyboard.status}`;
+            if (storyboard.first_frame_url) {
+                context += `\n- 首帧图片: 已生成`;
+            }
+            if (storyboard.last_frame_url) {
+                context += `\n- 尾帧图片: 已生成`;
+            }
+            if (storyboard.video_url) {
+                context += `\n- 视频: 已生成`;
+            }
+        }
+    }
+    if (session.current_result) {
+        context += `\n\n上次修改结果：${session.current_result}`;
+    }
+    return context;
+}
+/**
+ * 发送消息并获取AI回复
+ */
+async function sendGenerationMessage(sessionId, userMessage) {
+    const session = generationSession_1.generationSessionModel.findById(sessionId);
+    if (!session) {
+        throw new Error('会话不存在');
+    }
+    // 保存用户消息
+    generationSession_1.generationMessageModel.create({
+        session_id: sessionId,
+        role: 'user',
+        content: userMessage
+    });
+    // 获取历史消息
+    const historyMessages = getSessionMessages(sessionId);
+    // 构建上下文
+    const context = buildContext(session);
+    const systemPrompt = SYSTEM_PROMPTS[session.type] + (context ? `\n\n${context}` : '');
+    // 构建消息列表
+    const messages = [
+        { role: 'system', content: systemPrompt },
+        ...historyMessages
+    ];
+    // 获取AI适配器
+    let adapter;
+    try {
+        adapter = factory_1.AIAdapterFactory.getAdapterForFunction('storyboard');
+    }
+    catch {
+        throw new Error('未配置文本生成AI服务，请先在设置中配置');
+    }
+    // 调用AI生成回复
+    const prompt = buildPromptFromMessages(messages);
+    const aiResponse = await adapter.generateText(prompt, {
+        maxTokens: 2000,
+        temperature: 0.7
+    });
+    // 保存AI回复
+    const assistantMessage = generationSession_1.generationMessageModel.create({
+        session_id: sessionId,
+        role: 'assistant',
+        content: aiResponse,
+        result_snapshot: aiResponse
+    });
+    // 更新会话的当前结果
+    generationSession_1.generationSessionModel.update(sessionId, {
+        current_result: aiResponse
+    });
+    return {
+        message: assistantMessage,
+        result: aiResponse
+    };
+}
+/**
+ * 将消息列表构建为提示词
+ */
+function buildPromptFromMessages(messages) {
+    let prompt = '';
+    for (const msg of messages) {
+        switch (msg.role) {
+            case 'system':
+                prompt += `系统指令：${msg.content}\n\n`;
+                break;
+            case 'user':
+                prompt += `用户：${msg.content}\n\n`;
+                break;
+            case 'assistant':
+                prompt += `助手：${msg.content}\n\n`;
+                break;
+        }
+    }
+    prompt += '助手：';
+    return prompt;
+}
+/**
+ * 应用修改结果到分镜
+ */
+async function applyStoryboardChanges(sessionId) {
+    const session = generationSession_1.generationSessionModel.findById(sessionId);
+    if (!session || !session.storyboard_id || !session.current_result) {
+        return false;
+    }
+    try {
+        // 尝试解析JSON结果
+        const result = JSON.parse(session.current_result);
+        const updateData = {};
+        if (result.sceneDescription !== undefined) {
+            updateData.scene_description = result.sceneDescription;
+        }
+        if (result.visualDescription !== undefined) {
+            updateData.visual_description = result.visualDescription;
+        }
+        if (result.duration !== undefined) {
+            updateData.duration = result.duration;
+        }
+        if (result.narration !== undefined) {
+            updateData.narration = result.narration;
+        }
+        if (Object.keys(updateData).length > 0) {
+            storyboard_1.storyboardModel.update(session.storyboard_id, updateData);
+            return true;
+        }
+    }
+    catch (e) {
+        console.error('Failed to parse storyboard changes:', e);
+    }
+    return false;
+}
+/**
+ * 获取会话详情
+ */
+function getGenerationSessionWithMessages(sessionId) {
+    return generationSession_1.generationSessionModel.findWithMessages(sessionId);
+}
+/**
+ * 获取分镜的修改会话
+ */
+function getStoryboardSessions(storyboardId, type) {
+    return generationSession_1.generationSessionModel.findByStoryboardAndType(storyboardId, type);
+}
+/**
+ * 获取项目的修改会话
+ */
+function getProjectGenerationSessions(projectId, type) {
+    return generationSession_1.generationSessionModel.findByProjectAndType(projectId, type);
+}
+/**
+ * 更新会话
+ */
+function updateGenerationSession(sessionId, data) {
+    return generationSession_1.generationSessionModel.update(sessionId, data);
+}
+/**
+ * 删除会话
+ */
+function deleteGenerationSession(sessionId) {
+    return generationSession_1.generationSessionModel.delete(sessionId);
+}
+/**
+ * 应用视频参数修改
+ */
+async function applyVideoChanges(sessionId) {
+    const session = generationSession_1.generationSessionModel.findById(sessionId);
+    if (!session || !session.storyboard_id || !session.current_result) {
+        return false;
+    }
+    try {
+        // 尝试解析JSON结果
+        const result = JSON.parse(session.current_result);
+        const updateData = {};
+        if (result.duration !== undefined) {
+            updateData.duration = result.duration;
+        }
+        // 可以在这里添加更多视频相关字段的处理
+        if (Object.keys(updateData).length > 0) {
+            storyboard_1.storyboardModel.update(session.storyboard_id, updateData);
+            return true;
+        }
+    }
+    catch (e) {
+        console.error('Failed to parse video changes:', e);
+    }
+    return false;
+}
+/**
+ * 应用语音参数修改
+ */
+async function applySpeechChanges(sessionId) {
+    const session = generationSession_1.generationSessionModel.findById(sessionId);
+    if (!session || !session.storyboard_id || !session.current_result) {
+        return false;
+    }
+    try {
+        // 尝试解析JSON结果
+        const result = JSON.parse(session.current_result);
+        const updateData = {};
+        if (result.text !== undefined) {
+            updateData.narration = result.text;
+        }
+        // speed和pitch可以存在extra_config或类似字段中
+        if (Object.keys(updateData).length > 0) {
+            storyboard_1.storyboardModel.update(session.storyboard_id, updateData);
+            return true;
+        }
+    }
+    catch (e) {
+        console.error('Failed to parse speech changes:', e);
+    }
+    return false;
+}
+/**
+ * 应用图片提示词修改（保存到分镜的画面说明）
+ */
+async function applyImageChanges(sessionId) {
+    const session = generationSession_1.generationSessionModel.findById(sessionId);
+    if (!session || !session.storyboard_id || !session.current_result) {
+        return false;
+    }
+    try {
+        // 图片类型的结果是优化后的提示词，保存到画面说明
+        storyboard_1.storyboardModel.update(session.storyboard_id, {
+            visual_description: session.current_result
+        });
+        return true;
+    }
+    catch (e) {
+        console.error('Failed to apply image changes:', e);
+    }
+    return false;
+}
+/**
+ * 重新生成图片（基于优化后的提示词）
+ */
+async function regenerateImage(sessionId, storyboardId) {
+    const session = generationSession_1.generationSessionModel.findById(sessionId);
+    if (!session || !session.current_result) {
+        return { error: '会话不存在或没有优化后的提示词' };
+    }
+    try {
+        const adapter = factory_1.AIAdapterFactory.getAdapterForFunction('image');
+        // 使用优化后的提示词生成图片
+        const imagePath = await adapter.generateImage(session.current_result, {
+            width: 1792,
+            height: 1024,
+            quality: 'standard'
+        });
+        return { imagePath };
+    }
+    catch (e) {
+        console.error('Failed to regenerate image:', e);
+        return { error: e instanceof Error ? e.message : '图片生成失败' };
+    }
+}
+//# sourceMappingURL=session.js.map
