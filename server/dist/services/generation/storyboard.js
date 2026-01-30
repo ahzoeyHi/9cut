@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateStoryboards = generateStoryboards;
+exports.regenerateSingleStoryboard = regenerateSingleStoryboard;
 const project_1 = require("../../models/project");
 const storyboard_1 = require("../../models/storyboard");
 const prompt_1 = require("../../models/prompt");
@@ -117,6 +118,99 @@ async function generateStoryboards(projectId, taskId) {
             status: 'failed',
             error: error instanceof Error ? error.message : '生成失败'
         });
+    }
+}
+// 重新生成单个分镜的提示词模板
+const REGENERATE_SINGLE_STORYBOARD_PROMPT = `你是一个专业的分镜脚本编写专家。请根据用户的修改指令，重新生成这个分镜。
+
+当前分镜信息：
+- 场景描述: {sceneDescription}
+- 画面说明: {visualDescription}
+- 时长: {duration}毫秒
+
+用户修改指令: {instruction}
+
+请根据用户指令修改分镜内容，以JSON格式返回：
+{
+  "sceneDescription": "新的场景描述",
+  "visualDescription": "新的具体画面说明",
+  "duration": 时长毫秒数
+}
+
+注意：
+1. 画面说明要具体、可视化、易于生成图片
+2. 如果用户没有特别指定，保持原有时长
+3. 只返回JSON，不要其他内容`;
+/**
+ * 重新生成单个分镜
+ */
+async function regenerateSingleStoryboard(storyboardId, instruction) {
+    try {
+        // 获取现有分镜
+        const storyboard = storyboard_1.storyboardModel.findById(storyboardId);
+        if (!storyboard) {
+            return { success: false, error: '分镜不存在' };
+        }
+        // 获取AI适配器
+        let adapter;
+        try {
+            adapter = factory_1.AIAdapterFactory.getAdapterForFunction('storyboard');
+        }
+        catch {
+            return { success: false, error: '未配置AI服务，请先在设置中配置' };
+        }
+        // 构建提示词
+        const prompt = REGENERATE_SINGLE_STORYBOARD_PROMPT
+            .replace('{sceneDescription}', storyboard.scene_description || '未设置')
+            .replace('{visualDescription}', storyboard.visual_description || '未设置')
+            .replace('{duration}', String(storyboard.duration || 3000))
+            .replace('{instruction}', instruction);
+        // 调用AI生成
+        const response = await adapter.generateText(prompt, {
+            maxTokens: 1000,
+            temperature: 0.7
+        });
+        // 解析响应
+        let result;
+        try {
+            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error('无法从响应中提取JSON');
+            }
+            result = JSON.parse(jsonMatch[0]);
+        }
+        catch (parseError) {
+            console.error('Parse error:', parseError);
+            return { success: false, error: '解析AI响应失败' };
+        }
+        // 更新分镜
+        const updated = storyboard_1.storyboardModel.update(storyboardId, {
+            scene_description: result.sceneDescription,
+            visual_description: result.visualDescription,
+            duration: result.duration || storyboard.duration
+        });
+        if (!updated) {
+            return { success: false, error: '更新分镜失败' };
+        }
+        return {
+            success: true,
+            storyboard: {
+                id: updated.id,
+                projectId: updated.project_id,
+                sequence: updated.sequence,
+                sceneDescription: updated.scene_description,
+                visualDescription: updated.visual_description,
+                duration: updated.duration,
+                status: updated.status
+            }
+        };
+    }
+    catch (error) {
+        console.error('Error regenerating storyboard:', error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : '重新生成失败'
+        };
     }
 }
 // 生成模拟数据（用于测试）

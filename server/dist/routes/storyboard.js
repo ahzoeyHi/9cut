@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const storyboard_1 = require("../models/storyboard");
 const task_1 = require("../models/task");
+const storyboard_2 = require("../services/generation/storyboard");
 const router = (0, express_1.Router)();
 // 转换数据库字段为前端格式
 function formatStoryboard(s) {
@@ -112,6 +113,27 @@ router.post('/projects/:projectId/storyboards/generate', (req, res) => {
     catch (error) {
         console.error('Error generating storyboards:', error);
         res.status(500).json({ message: '生成分镜失败' });
+    }
+});
+// 重新生成单个分镜
+router.post('/storyboards/:id/regenerate', async (req, res) => {
+    try {
+        const { instruction } = req.body;
+        if (!instruction || !instruction.trim()) {
+            return res.status(400).json({ message: '请输入修改指令' });
+        }
+        const result = await (0, storyboard_2.regenerateSingleStoryboard)(req.params.id, instruction.trim());
+        if (!result.success) {
+            return res.status(400).json({ message: result.error });
+        }
+        res.json({
+            storyboard: result.storyboard,
+            success: true
+        });
+    }
+    catch (error) {
+        console.error('Error regenerating storyboard:', error);
+        res.status(500).json({ message: '重新生成分镜失败' });
     }
 });
 exports.default = router;

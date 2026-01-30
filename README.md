@@ -715,7 +715,7 @@ docker run -d -p 80:80 -p 3000:3000 --env-file .env 9cut:latest
 - 如使用 Docker，确保镜像包含 FFmpeg
 - 查看后端日志获取 FFmpeg 错误信息
 
-### 4. 文件上传失败
+### 5. 文件上传失败
 
 **问题**: 上传文件时报错
 
@@ -724,7 +724,7 @@ docker run -d -p 80:80 -p 3000:3000 --env-file .env 9cut:latest
 - 确保上传目录有写入权限
 - 检查磁盘空间是否充足
 
-### 5. 数据库错误
+### 6. 数据库错误
 
 **问题**: SQLite 数据库相关错误
 
@@ -732,6 +732,29 @@ docker run -d -p 80:80 -p 3000:3000 --env-file .env 9cut:latest
 - 确保 `DATABASE_PATH` 目录有写入权限
 - 删除 `database.sqlite` 重新初始化（注意备份数据）
 - 运行数据库迁移: `npm run db:migrate`
+
+### 7. TypeScript 编译错误
+
+**问题**: 构建时出现 "is declared but its value is never read" 错误
+
+**解决方案**:
+- 这是 TypeScript 严格模式的未使用变量检查
+- 删除未使用的导入和变量声明
+- 或在 `tsconfig.json` 中设置 `"noUnusedLocals": false`（不推荐）
+
+**常见错误示例**:
+```
+error TS6133: 'xxx' is declared but its value is never read.
+```
+
+**修复方法**:
+```typescript
+// 错误：导入但未使用
+import { storyboardApi } from '../api/storyboard';  // ❌
+
+// 正确：只导入使用的模块
+import { generationApi } from '../api/generation';  // ✅
+```
 
 ---
 
