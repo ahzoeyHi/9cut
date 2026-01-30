@@ -254,12 +254,24 @@ docker-compose down
 docker-compose down -v
 ```
 
+> 💡 **提示**：可以通过修改 `.env` 文件中的 `HTTP_PORT` 来自定义访问端口。例如设置 `HTTP_PORT=8080` 后，访问地址变为 `http://localhost:8080`
+
 #### 3. 访问系统
 
-- **前端页面**: http://localhost
-- **后端 API**: http://localhost/api （通过 Nginx 反向代理）
+访问地址取决于 `.env` 中的 `HTTP_PORT` 配置：
 
-> 注意：为了安全，后端端口 3000 不对外开放，所有 API 请求通过 Nginx 反向代理到 `/api` 路径访问。
+- **前端页面**: `http://localhost:${HTTP_PORT}` （默认 http://localhost）
+- **后端 API**: `http://localhost:${HTTP_PORT}/api` （通过 Nginx 反向代理）
+
+**不同端口配置的访问示例**：
+
+| HTTP_PORT 配置 | 前端访问地址 | API 访问地址 |
+|---------------|------------|-------------|
+| 80 (默认) | http://localhost | http://localhost/api |
+| 8080 | http://localhost:8080 | http://localhost:8080/api |
+| 8000 | http://localhost:8000 | http://localhost:8000/api |
+
+> 注意：为了安全，后端端口 3000 默认不对外开放，所有 API 请求通过 Nginx 反向代理到 `/api` 路径访问。
 
 #### 4. 数据持久化
 
@@ -336,6 +348,50 @@ docker rm -f 9cut-app
 ## ⚙️ 配置说明
 
 ### 环境变量配置（.env 文件）
+
+#### Docker 端口映射配置
+
+```env
+# HTTP 端口映射（宿主机端口:容器端口 80）
+# 默认: 80，可改为其他端口如 8080、8000 等
+HTTP_PORT=80
+
+# 后端 API 端口映射（可选）
+# 默认不开放，所有 API 请求通过 Nginx 反向代理访问
+# 如需直接访问后端 API，取消注释并设置端口
+# BACKEND_PORT=3000
+```
+
+**端口配置说明**：
+
+- `HTTP_PORT`：前端访问端口，默认 80
+  - 如果 80 端口被占用，可改为 `8080`、`8000` 等
+  - 修改后访问地址变为 `http://localhost:8080`
+
+- `BACKEND_PORT`：后端 API 直接访问端口（可选）
+  - 默认不开放，通过 Nginx 反向代理访问更安全
+  - 如需调试或直接访问 API，取消注释此配置
+  - 开放后可直接访问 `http://localhost:3000/api`
+
+**常用端口配置示例**：
+
+```env
+# 示例 1: 默认配置（推荐）- 只开放 80 端口
+HTTP_PORT=80
+# BACKEND_PORT=3000
+
+# 示例 2: 使用 8080 端口
+HTTP_PORT=8080
+# BACKEND_PORT=3000
+
+# 示例 3: 开放后端调试端口
+HTTP_PORT=80
+BACKEND_PORT=3000
+
+# 示例 4: 自定义两个端口
+HTTP_PORT=8080
+BACKEND_PORT=8001
+```
 
 #### 服务器配置
 
