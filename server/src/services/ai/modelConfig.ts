@@ -51,6 +51,7 @@ function parseModelListConfig(configStr: string): ModelInfo[] {
 const DEFAULT_OPENAI_MODELS: ModelInfo[] = [
   { id: 'gpt-4o', name: 'GPT-4o', capabilities: ['text', 'image'] },
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini', capabilities: ['text', 'image'] },
+  { id: 'gpt-oss-120b-medium', name: 'GPT-OSS-120B-Medium', capabilities: ['text'] },
   { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', capabilities: ['text'] },
   { id: 'gpt-4', name: 'GPT-4', capabilities: ['text'] },
   { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', capabilities: ['text'] },
@@ -66,6 +67,9 @@ const DEFAULT_OPENAI_MODELS: ModelInfo[] = [
 ];
 
 const DEFAULT_CLAUDE_MODELS: ModelInfo[] = [
+  { id: 'gemini-claude-sonnet-4-5', name: 'Gemini Claude Sonnet 4.5', capabilities: ['text'] },
+  { id: 'gemini-claude-opus-4-5-thinking', name: 'Gemini Claude Opus 4.5 Thinking', capabilities: ['text'] },
+  { id: 'gemini-claude-sonnet-4-5-thinking', name: 'Gemini Claude Sonnet 4.5 Thinking', capabilities: ['text'] },
   { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', capabilities: ['text'] },
   { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', capabilities: ['text'] },
   { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', capabilities: ['text'] },
@@ -75,8 +79,14 @@ const DEFAULT_CLAUDE_MODELS: ModelInfo[] = [
 ];
 
 const DEFAULT_GEMINI_MODELS: ModelInfo[] = [
-  { id: 'gemini-2.5-pro-preview-05-06', name: 'Gemini 2.5 Pro', capabilities: ['text', 'image'] },
-  { id: 'gemini-2.5-flash-preview-05-20', name: 'Gemini 2.5 Flash', capabilities: ['text', 'image'] },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', capabilities: ['text', 'image'] },
+  { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', capabilities: ['text'] },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', capabilities: ['text', 'image'] },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', capabilities: ['text', 'image'] },
+  { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro Preview', capabilities: ['text', 'image'] },
+  { id: 'gemini-3-pro-image-preview', name: 'Gemini 3 Pro Image Preview', capabilities: ['image'] },
+  { id: 'gemini-2.5-pro-preview-05-06', name: 'Gemini 2.5 Pro Preview', capabilities: ['text', 'image'] },
+  { id: 'gemini-2.5-flash-preview-05-20', name: 'Gemini 2.5 Flash Preview', capabilities: ['text', 'image'] },
   { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', capabilities: ['text', 'image'] },
   { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite', capabilities: ['text'] },
   { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', capabilities: ['text'] },
@@ -85,6 +95,15 @@ const DEFAULT_GEMINI_MODELS: ModelInfo[] = [
 ];
 
 const DEFAULT_QWEN_MODELS: ModelInfo[] = [
+  { id: 'qwen3-coder-plus', name: 'Qwen3 Coder Plus', capabilities: ['text'] },
+  { id: 'qwen3-235b', name: 'Qwen3 235B', capabilities: ['text'] },
+  { id: 'qwen3-235b-a22b-thinking-2507', name: 'Qwen3 235B A22B Thinking', capabilities: ['text'] },
+  { id: 'qwen3-vl-plus', name: 'Qwen3 VL Plus', capabilities: ['text', 'image'] },
+  { id: 'qwen3-32b', name: 'Qwen3 32B', capabilities: ['text'] },
+  { id: 'qwen3-coder-flash', name: 'Qwen3 Coder Flash', capabilities: ['text'] },
+  { id: 'qwen3-max', name: 'Qwen3 Max', capabilities: ['text'] },
+  { id: 'qwen3-max-preview', name: 'Qwen3 Max Preview', capabilities: ['text'] },
+  { id: 'qwen3-235b-a22b-instruct', name: 'Qwen3 235B A22B Instruct', capabilities: ['text'] },
   { id: 'qwen-max', name: '通义千问-Max', capabilities: ['text'] },
   { id: 'qwen-max-latest', name: '通义千问-Max最新', capabilities: ['text'] },
   { id: 'qwen-plus', name: '通义千问-Plus', capabilities: ['text'] },
@@ -110,6 +129,26 @@ const DEFAULT_VOLCENGINE_MODELS: ModelInfo[] = [
   { id: 'doubao-vision-lite-32k', name: '豆包Vision Lite 32K', capabilities: ['text', 'image'] },
 ];
 
+const DEFAULT_KIMI_MODELS: ModelInfo[] = [
+  { id: 'kimi-k2-thinking', name: 'Kimi K2 Thinking', capabilities: ['text'] },
+  { id: 'kimi-k2-0905', name: 'Kimi K2 0905', capabilities: ['text'] },
+  { id: 'kimi-k2', name: 'Kimi K2', capabilities: ['text'] },
+];
+
+const DEFAULT_GLM_MODELS: ModelInfo[] = [
+  { id: 'glm-4.6', name: 'GLM-4.6', capabilities: ['text'] },
+  { id: 'glm-4.7', name: 'GLM-4.7', capabilities: ['text'] },
+];
+
+const DEFAULT_DEEPSEEK_MODELS: ModelInfo[] = [
+  { id: 'deepseek-v3.2-reasoner', name: 'DeepSeek v3.2 Reasoner', capabilities: ['text'] },
+  { id: 'deepseek-v3.1', name: 'DeepSeek v3.1', capabilities: ['text'] },
+  { id: 'deepseek-v3', name: 'DeepSeek v3', capabilities: ['text'] },
+  { id: 'deepseek-v3.2-chat', name: 'DeepSeek v3.2 Chat', capabilities: ['text'] },
+  { id: 'deepseek-v3.2', name: 'DeepSeek v3.2', capabilities: ['text'] },
+  { id: 'deepseek-r1', name: 'DeepSeek R1', capabilities: ['text'] },
+];
+
 // 默认模型映射
 const DEFAULT_MODELS: Record<AIServiceType, ModelInfo[]> = {
   openai: DEFAULT_OPENAI_MODELS,
@@ -117,6 +156,9 @@ const DEFAULT_MODELS: Record<AIServiceType, ModelInfo[]> = {
   gemini: DEFAULT_GEMINI_MODELS,
   qwen: DEFAULT_QWEN_MODELS,
   volcengine: DEFAULT_VOLCENGINE_MODELS,
+  kimi: DEFAULT_KIMI_MODELS,
+  glm: DEFAULT_GLM_MODELS,
+  deepseek: DEFAULT_DEEPSEEK_MODELS,
 };
 
 // 环境变量名映射
@@ -126,6 +168,9 @@ const ENV_VAR_NAMES: Record<AIServiceType, string> = {
   gemini: 'GEMINI_MODELS',
   qwen: 'QWEN_MODELS',
   volcengine: 'VOLCENGINE_MODELS',
+  kimi: 'KIMI_MODELS',
+  glm: 'GLM_MODELS',
+  deepseek: 'DEEPSEEK_MODELS',
 };
 
 /**
@@ -151,7 +196,7 @@ export function getConfiguredModels(serviceType: AIServiceType): ModelInfo[] {
  * 获取所有服务的模型配置
  */
 export function getAllConfiguredModels(): Record<AIServiceType, ModelInfo[]> {
-  const services: AIServiceType[] = ['openai', 'claude', 'gemini', 'qwen', 'volcengine'];
+  const services: AIServiceType[] = ['openai', 'claude', 'gemini', 'qwen', 'volcengine', 'kimi', 'glm', 'deepseek'];
   const result: Record<string, ModelInfo[]> = {};
 
   for (const service of services) {

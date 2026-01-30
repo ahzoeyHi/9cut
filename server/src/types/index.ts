@@ -5,7 +5,7 @@ export type ProjectStatus = 'draft' | 'processing' | 'completed';
 export type StoryboardStatus = 'pending' | 'generating' | 'completed' | 'error';
 
 // AI服务类型
-export type AIServiceType = 'claude' | 'gemini' | 'openai' | 'volcengine' | 'qwen';
+export type AIServiceType = 'claude' | 'gemini' | 'openai' | 'volcengine' | 'qwen' | 'kimi' | 'glm' | 'deepseek';
 
 // 功能类型
 export type FunctionType = 'storyboard' | 'image' | 'narration' | 'speech' | 'video';

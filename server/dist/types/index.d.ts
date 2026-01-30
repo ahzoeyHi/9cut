@@ -1,6 +1,6 @@
 export type ProjectStatus = 'draft' | 'processing' | 'completed';
 export type StoryboardStatus = 'pending' | 'generating' | 'completed' | 'error';
-export type AIServiceType = 'claude' | 'gemini' | 'openai' | 'volcengine' | 'qwen';
+export type AIServiceType = 'claude' | 'gemini' | 'openai' | 'volcengine' | 'qwen' | 'kimi' | 'glm' | 'deepseek';
 export type FunctionType = 'storyboard' | 'image' | 'narration' | 'speech' | 'video';
 export type ResourceType = 'image' | 'video' | 'audio';
 export type ResourceSubtype = 'first_frame' | 'last_frame' | 'merged' | 'speech';

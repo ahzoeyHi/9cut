@@ -174,6 +174,65 @@ async function fetchVolcengineModels(apiKey, endpoint) {
     }
 }
 /**
+ * 获取Kimi模型列表（Moonshot API兼容OpenAI格式）
+ */
+async function fetchKimiModels(apiKey, endpoint) {
+    // 默认Kimi API地址
+    const baseUrl = endpoint || 'https://api.moonshot.cn/v1';
+    return fetchOpenAICompatibleModels(apiKey, baseUrl, 'kimi');
+}
+/**
+ * 获取智谱GLM模型列表（GLM API兼容OpenAI格式）
+ */
+async function fetchGLMModels(apiKey, endpoint) {
+    // 默认智谱API地址
+    const baseUrl = endpoint || 'https://open.bigmodel.cn/api/paas/v4';
+    return fetchOpenAICompatibleModels(apiKey, baseUrl, 'glm');
+}
+/**
+ * 获取DeepSeek模型列表（DeepSeek API兼容OpenAI格式）
+ */
+async function fetchDeepSeekModels(apiKey, endpoint) {
+    // 默认DeepSeek API地址
+    const baseUrl = endpoint || 'https://api.deepseek.com';
+    return fetchOpenAICompatibleModels(apiKey, baseUrl, 'deepseek');
+}
+/**
+ * 通用的OpenAI兼容API模型获取函数
+ */
+async function fetchOpenAICompatibleModels(apiKey, baseUrl, serviceType) {
+    const configuredModels = (0, modelConfig_1.getConfiguredModels)(serviceType);
+    try {
+        const response = await fetch(`${baseUrl}/models`, {
+            headers: {
+                'Authorization': `Bearer ${apiKey}`
+            }
+        });
+        if (!response.ok) {
+            console.log(`[Models] ${serviceType} API failed, using configured models`);
+            return configuredModels;
+        }
+        const data = await response.json();
+        const configuredMap = new Map(configuredModels.map(m => [m.id, m]));
+        const models = data.data.map(model => {
+            const configured = configuredMap.get(model.id);
+            if (configured) {
+                return configured;
+            }
+            return {
+                id: model.id,
+                name: model.id,
+                capabilities: ['text'] // 默认假设为文本能力
+            };
+        });
+        return models.sort((a, b) => a.id.localeCompare(b.id));
+    }
+    catch (error) {
+        console.error(`Error fetching ${serviceType} models:`, error);
+        return configuredModels;
+    }
+}
+/**
  * 获取指定服务的模型列表
  */
 async function fetchModels(serviceType, apiKey, endpoint) {
@@ -188,6 +247,12 @@ async function fetchModels(serviceType, apiKey, endpoint) {
             return fetchQwenModels(apiKey, endpoint);
         case 'volcengine':
             return fetchVolcengineModels(apiKey, endpoint);
+        case 'kimi':
+            return fetchKimiModels(apiKey, endpoint);
+        case 'glm':
+            return fetchGLMModels(apiKey, endpoint);
+        case 'deepseek':
+            return fetchDeepSeekModels(apiKey, endpoint);
         default:
             throw new Error(`Unsupported service type: ${serviceType}`);
     }

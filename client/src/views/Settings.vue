@@ -37,7 +37,10 @@ const serviceTypes: { value: AIServiceType; label: string }[] = [
   { value: 'claude', label: 'Claude' },
   { value: 'gemini', label: 'Gemini' },
   { value: 'volcengine', label: '火山引擎' },
-  { value: 'qwen', label: '通义千问' }
+  { value: 'qwen', label: '通义千问' },
+  { value: 'kimi', label: 'Kimi' },
+  { value: 'glm', label: '智谱GLM' },
+  { value: 'deepseek', label: 'DeepSeek' }
 ];
 
 const functionTypes: { value: FunctionType; label: string }[] = [
